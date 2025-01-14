@@ -1,11 +1,5 @@
 import subprocess
-
-from tkinter import Tk
-from tkinter import Entry
-from tkinter import Text
-from tkinter import Scrollbar
-from tkinter import Button
-from tkinter import END
+from tkinter import Tk, Entry, Text, Scrollbar, END
 
 
 if __name__ == '__main__':
@@ -13,7 +7,7 @@ if __name__ == '__main__':
     window.title('OwlAI Terminal')
     window.geometry("1200x690")
 
-    def execute_command():
+    def execute_command(event=None):
         """Executing command using subprocess with entry get"""
 
         command = entry.get()
@@ -23,15 +17,20 @@ if __name__ == '__main__':
                 result = subprocess.run(
                     command, shell=True, text=True, capture_output=True
                 )
-                chars = f"$ {command}\n{result.stdout}\n{result.stderr}\n"
-                output_text.insert(
-                    END, chars
-                )
+                chars = f"$ {command}\n{result.stdout}{result.stderr}\n"
+                output_text.insert(END, chars)
+                # Auto-scroll to the end
+                output_text.see(END)
             except Exception as e:
                 output_text.insert(END, f"Error: {str(e)}\n")
             finally:
                 # Clear the entry field after execution
                 entry.delete(0, END)
+
+    def clear_output(event=None):
+        """Clear the output text area"""
+
+        output_text.delete(1.0, END)
 
     # Entry widget for user input
     entry = Entry(window, width=120)
@@ -48,8 +47,9 @@ if __name__ == '__main__':
     scrollbar.pack(side="right", fill="y")
     scrollbar.config(command=output_text.yview)
 
-    # Button to execute the command
-    execute_button = Button(window, text="Execute", command=execute_command)
-    execute_button.pack()
+    # Bind hotkeys: Enter to execute command
+    window.bind('<Return>', execute_command)
+    # Bind hotkeys: Ctrl+L to clear output
+    window.bind('<Control-l>', clear_output)
 
     window.mainloop()
