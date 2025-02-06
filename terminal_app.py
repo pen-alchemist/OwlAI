@@ -1,6 +1,7 @@
 import subprocess
 from tkinter import Tk, Entry, Text, Scrollbar, END, Frame, Label, Button
 from tkinter import ttk
+from tkinter.font import Font
 
 class TerminalApp:
     def __init__(self, root):
@@ -52,10 +53,16 @@ class TerminalApp:
         self.style_button = Button(self.root, text="Switch to Dark Mode", command=self.toggle_style, bg=self.current_style["bg"], fg=self.current_style["fg"], relief="flat")
         self.style_button.pack(side="right", padx=10, pady=10)
 
+        # Bind click events on the notebook
+        self.notebook.bind("<ButtonPress-1>", self.on_tab_click)
+
     def add_tab(self):
         """Add a new tab to the notebook"""
         tab_frame = Frame(self.notebook, bg=self.current_style["bg"])
-        self.notebook.add(tab_frame, text=f"Terminal {self.notebook.index('end') + 1}")
+        tab_id = f"Terminal {self.notebook.index('end') + 1}"
+
+        # Add the tab to the notebook with a close button symbol
+        self.notebook.add(tab_frame, text=f"{tab_id} ×")
 
         # Entry widget for user input
         entry_frame = Frame(tab_frame, bg=self.current_style["bg"])
@@ -82,6 +89,25 @@ class TerminalApp:
         entry.bind('<Return>', lambda event, e=entry, o=output_text: self.execute_command(e, o))
         # Bind hotkeys: Ctrl+L to clear output
         output_text.bind('<Control-l>', lambda event, o=output_text: self.clear_output(o))
+
+    def on_tab_click(self, event):
+        """Handle click events on the tab label to close the tab"""
+        tab_id = self.notebook.identify(event.x, event.y)
+        if tab_id:
+            tab_index = self.notebook.index(tab_id)
+            tab_text = self.notebook.tab(tab_id, "text")
+
+            # Calculate the position of the "×" symbol
+            font = Font(family="Arial", size=10)  # Use the same font as the tab label
+            text_width = font.measure(tab_text)
+            close_button_width = font.measure(" ×")
+            close_button_start = text_width - close_button_width
+
+            # Check if the click was on the "×" symbol
+            if event.x >= close_button_start:
+                self.notebook.forget(tab_id)
+                if not self.notebook.tabs():  # If no tabs are left
+                    self.root.quit()  # Close the application
 
     def toggle_style(self):
         """Toggle between light and dark mode"""
