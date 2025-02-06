@@ -3,107 +3,158 @@ from tkinter import Tk, Entry, Text, Scrollbar, END, Frame, Label, Button
 from tkinter import ttk
 from tkinter.font import Font
 
+
 class TerminalApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("OwlAI Terminal")
-        self.root.geometry("1200x690")
+        self.root.title('OwlAI Terminal')
+        self.root.geometry('1200x690')
 
         # Define light and dark mode colors
         self.light_mode = {
-            "bg": "#f0f0f0",
-            "fg": "#333333",
-            "entry_bg": "#ffffff",
-            "entry_fg": "#333333",
-            "output_bg": "#ffffff",
-            "output_fg": "#333333",
-            "highlight": "#cccccc",
-            "tab_bg": "#f0f0f0",
-            "tab_fg": "#333333",
+            'bg': '#f0f0f0',
+            'fg': '#333333',
+            'entry_bg': '#ffffff',
+            'entry_fg': '#333333',
+            'output_bg': '#ffffff',
+            'output_fg': '#333333',
+            'highlight': '#cccccc',
+            'tab_bg': '#f0f0f0',
+            'tab_fg': '#333333',
         }
         self.dark_mode = {
-            "bg": "#1e1e1e",
-            "fg": "#ffffff",
-            "entry_bg": "#2d2d2d",
-            "entry_fg": "#ffffff",
-            "output_bg": "#2d2d2d",
-            "output_fg": "#ffffff",
-            "highlight": "#555555",
-            "tab_bg": "#1e1e1e",
-            "tab_fg": "#ffffff",
+            'bg': '#1e1e1e',
+            'fg': '#ffffff',
+            'entry_bg': '#2d2d2d',
+            'entry_fg': '#ffffff',
+            'output_bg': '#2d2d2d',
+            'output_fg': '#ffffff',
+            'highlight': '#555555',
+            'tab_bg': '#1e1e1e',
+            'tab_fg': '#ffffff',
         }
         self.current_style = self.light_mode  # Default to light mode
 
         # Custom fonts
-        self.entry_font = ("Consolas", 12)
-        self.output_font = ("Consolas", 11)
+        self.entry_font = ('Consolas', 12)
+        self.output_font = ('Consolas', 11)
 
         # Create a notebook (tabbed interface)
         self.notebook = ttk.Notebook(self.root)
-        self.notebook.pack(fill="both", expand=True, padx=10, pady=10)
+        self.notebook.pack(fill='both', expand=True, padx=10, pady=10)
 
         # Add the first tab
         self.add_tab()
 
         # Button to add new tabs
-        self.add_tab_button = Button(self.root, text="+ New Tab", command=self.add_tab, bg=self.current_style["bg"], fg=self.current_style["fg"], relief="flat")
-        self.add_tab_button.pack(side="left", padx=10, pady=10)
+        self.add_tab_button = Button(
+            self.root,
+            text='+ New Tab',
+            command=self.add_tab,
+            bg=self.current_style["bg"],
+            fg=self.current_style["fg"],
+            relief="flat"
+        )
+        self.add_tab_button.pack(side='left', padx=10, pady=10)
 
         # Button to toggle between light and dark mode
-        self.style_button = Button(self.root, text="Switch to Dark Mode", command=self.toggle_style, bg=self.current_style["bg"], fg=self.current_style["fg"], relief="flat")
-        self.style_button.pack(side="right", padx=10, pady=10)
+        self.style_button = Button(
+            self.root,
+            text='Switch to Dark Mode',
+            command=self.toggle_style,
+            bg=self.current_style["bg"],
+            fg=self.current_style["fg"],
+            relief="flat"
+        )
+        self.style_button.pack(side='right', padx=10, pady=10)
 
         # Bind click events on the notebook
-        self.notebook.bind("<ButtonPress-1>", self.on_tab_click)
+        self.notebook.bind('<ButtonPress-1>', self.on_tab_click)
 
     def add_tab(self):
         """Add a new tab to the notebook"""
-        tab_frame = Frame(self.notebook, bg=self.current_style["bg"])
-        tab_id = f"Terminal {self.notebook.index('end') + 1}"
+
+        tab_frame = Frame(self.notebook, bg=self.current_style['bg'])
+        tab_id = f'Terminal {self.notebook.index('end') + 1}'
 
         # Add the tab to the notebook with a close button symbol
-        self.notebook.add(tab_frame, text=f"{tab_id} ×")
+        self.notebook.add(tab_frame, text=f'{tab_id} ×')
 
         # Entry widget for user input
-        entry_frame = Frame(tab_frame, bg=self.current_style["bg"])
-        entry_frame.pack(pady=10, padx=10, fill="x")
+        entry_frame = Frame(tab_frame, bg=self.current_style['bg'])
+        entry_frame.pack(pady=10, padx=10, fill='x')
 
-        entry_label = Label(entry_frame, text="Enter Command:", bg=self.current_style["bg"], fg=self.current_style["fg"], font=("Arial", 12))
-        entry_label.pack(side="left", padx=(0, 10))
+        entry_label = Label(
+            entry_frame,
+            text='Enter Command:',
+            bg=self.current_style["bg"],
+            fg=self.current_style["fg"],
+            font=("Arial", 12)
+        )
+        entry_label.pack(side='left', padx=(0, 10))
 
-        entry = Entry(entry_frame, width=120, font=self.entry_font, bg=self.current_style["entry_bg"], fg=self.current_style["entry_fg"], relief="flat", highlightthickness=1, highlightcolor=self.current_style["highlight"], highlightbackground=self.current_style["highlight"])
+        entry = Entry(
+            entry_frame,
+            width=120,
+            font=self.entry_font,
+            bg=self.current_style["entry_bg"],
+            fg=self.current_style["entry_fg"],
+            relief="flat",
+            highlightthickness=1,
+            highlightcolor=self.current_style["highlight"],
+            highlightbackground=self.current_style["highlight"]
+        )
         entry.focus_set()
-        entry.pack(fill="x", expand=True, ipady=5)
+        entry.pack(fill='x', expand=True, ipady=5)
 
         # Output area for command results
-        output_text = Text(tab_frame, wrap="word", height=30, font=self.output_font, bg=self.current_style["output_bg"], fg=self.current_style["output_fg"], relief="flat", highlightthickness=1, highlightcolor=self.current_style["highlight"], highlightbackground=self.current_style["highlight"])
-        output_text.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        output_text = Text(
+            tab_frame,
+            wrap='word',
+            height=30,
+            font=self.output_font,
+            bg=self.current_style["output_bg"],
+            fg=self.current_style["output_fg"],
+            relief="flat", highlightthickness=1,
+            highlightcolor=self.current_style["highlight"],
+            highlightbackground=self.current_style["highlight"]
+        )
+        output_text.pack(fill='both', expand=True, padx=10, pady=(0, 10))
 
         # Scrollbar for the output area
         scrollbar = Scrollbar(output_text)
         output_text.config(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side="right", fill="y")
+        scrollbar.pack(side='right', fill='y')
         scrollbar.config(command=output_text.yview)
 
         # Bind hotkeys: Enter to execute command
-        entry.bind('<Return>', lambda event, e=entry, o=output_text: self.execute_command(e, o))
+        entry.bind(
+            '<Return>',
+            lambda event, e=entry, o=output_text:
+            self.execute_command(e, o)
+        )
         # Bind hotkeys: Ctrl+L to clear output
-        output_text.bind('<Control-l>', lambda event, o=output_text: self.clear_output(o))
+        output_text.bind(
+            '<Control-l>',
+            lambda event, o=output_text:
+            self.clear_output(o)
+        )
 
     def on_tab_click(self, event):
         """Handle click events on the tab label to close the tab"""
+
         tab_id = self.notebook.identify(event.x, event.y)
         if tab_id:
             tab_index = self.notebook.index(tab_id)
-            tab_text = self.notebook.tab(tab_id, "text")
+            tab_text = self.notebook.tab(tab_id, 'text')
 
-            # Calculate the position of the "×" symbol
-            font = Font(family="Arial", size=10)  # Use the same font as the tab label
+            # Calculate the position of the '×' symbol
+            font = Font(family='Arial', size=10)  # Use the same font as the tab label
             text_width = font.measure(tab_text)
-            close_button_width = font.measure(" ×")
+            close_button_width = font.measure(' ×')
             close_button_start = text_width - close_button_width
 
-            # Check if the click was on the "×" symbol
+            # Check if the click was on the '×' symbol
             if event.x >= close_button_start:
                 self.notebook.forget(tab_id)
                 if not self.notebook.tabs():  # If no tabs are left
@@ -111,45 +162,68 @@ class TerminalApp:
 
     def toggle_style(self):
         """Toggle between light and dark mode"""
+
         if self.current_style == self.light_mode:
             self.current_style = self.dark_mode
-            self.style_button.config(text="Switch to Light Mode")
+            self.style_button.config(text='Switch to Light Mode')
         else:
             self.current_style = self.light_mode
-            self.style_button.config(text="Switch to Dark Mode")
+            self.style_button.config(text='Switch to Dark Mode')
 
         # Apply the new style
         self.apply_style()
 
     def apply_style(self):
         """Apply the current style to all widgets"""
-        self.root.configure(bg=self.current_style["bg"])
-        self.add_tab_button.configure(bg=self.current_style["bg"], fg=self.current_style["fg"])
-        self.style_button.configure(bg=self.current_style["bg"], fg=self.current_style["fg"])
+
+        self.root.configure(bg=self.current_style['bg'])
+        self.add_tab_button.configure(
+            bg=self.current_style['bg'],
+            fg=self.current_style["fg"]
+        )
+        self.style_button.configure(
+            bg=self.current_style['bg'],
+            fg=self.current_style["fg"]
+        )
 
         # Update style for all tabs
         for tab_id in self.notebook.tabs():
             tab_frame = self.notebook.nametowidget(tab_id)
-            tab_frame.configure(bg=self.current_style["bg"])
+            tab_frame.configure(bg=self.current_style['bg'])
 
             # Update entry and output widgets in the tab
             for widget in tab_frame.winfo_children():
                 if isinstance(widget, Frame):  # Entry frame
-                    widget.configure(bg=self.current_style["bg"])
+                    widget.configure(bg=self.current_style['bg'])
                     for child in widget.winfo_children():
                         if isinstance(child, Label):
-                            child.configure(bg=self.current_style["bg"], fg=self.current_style["fg"])
+                            child.configure(
+                                bg=self.current_style['bg'],
+                                fg=self.current_style["fg"]
+                            )
                         elif isinstance(child, Entry):
-                            child.configure(bg=self.current_style["entry_bg"], fg=self.current_style["entry_fg"], highlightcolor=self.current_style["highlight"], highlightbackground=self.current_style["highlight"])
+                            child.configure(
+                                bg=self.current_style['entry_bg'],
+                                fg=self.current_style["entry_fg"],
+                                highlightcolor=self.current_style["highlight"],
+                                highlightbackground=self.current_style["highlight"]
+                            )
                 elif isinstance(widget, Text):  # Output text
-                    widget.configure(bg=self.current_style["output_bg"], fg=self.current_style["output_fg"], highlightcolor=self.current_style["highlight"], highlightbackground=self.current_style["highlight"])
+                    widget.configure(
+                        bg=self.current_style['output_bg'],
+                        fg=self.current_style["output_fg"],
+                        highlightcolor=self.current_style["highlight"],
+                        highlightbackground=self.current_style["highlight"]
+                    )
 
     def clear_output(self, output_text, event=None):
         """Clear the output text area"""
+
         output_text.delete(1.0, END)
 
     def execute_command(self, entry, output_text, event=None):
         """Execute command using subprocess"""
+
         command = entry.get()
         if command.strip():
             try:
@@ -157,12 +231,12 @@ class TerminalApp:
                 result = subprocess.run(
                     command, shell=True, text=True, capture_output=True
                 )
-                chars = f"$ {command}\n{result.stdout}{result.stderr}\n"
+                chars = f'$ {command}\n{result.stdout}{result.stderr}\n'
                 output_text.insert(END, chars)
                 # Auto-scroll to the end
                 output_text.see(END)
             except Exception as e:
-                output_text.insert(END, f"Error: {str(e)}\n")
+                output_text.insert(END, f'Error: {str(e)}\n')
             finally:
                 # Clear the entry field after execution
                 entry.delete(0, END)
