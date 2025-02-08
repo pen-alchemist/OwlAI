@@ -4,7 +4,7 @@ import pexpect
 import threading
 import subprocess
 
-from tkinter import Entry, Text, Scrollbar, END, Frame, Label, Button, Toplevel
+from tkinter import Entry, Text, Scrollbar, END, Frame, Label, Button, Toplevel, StringVar
 from tkinter import ttk
 from tkinter.font import Font
 
@@ -75,6 +75,17 @@ class TerminalApp:
             relief='flat'
         )
         self.style_button.pack(side='right', padx=10, pady=10)
+
+        # Settings button in the upper right corner
+        self.settings_button = Button(
+            self.root,
+            text='⚙️',  # Gear symbol for settings
+            command=self.open_settings,
+            bg=self.current_style['bg'],
+            fg=self.current_style['fg'],
+            relief='flat'
+        )
+        self.settings_button.pack(side='right', padx=10, pady=10)
 
         # Bind click events on the notebook
         self.notebook.bind('<ButtonPress-1>', self.on_tab_click)
@@ -195,6 +206,10 @@ class TerminalApp:
             fg=self.current_style['fg']
         )
         self.style_button.configure(
+            bg=self.current_style['bg'],
+            fg=self.current_style['fg']
+        )
+        self.settings_button.configure(
             bg=self.current_style['bg'],
             fg=self.current_style['fg']
         )
@@ -389,3 +404,51 @@ class TerminalApp:
         except Exception as e:
             output_text.insert(END, f'Error: {str(e)}\n')
             output_text.see(END)
+
+    def open_settings(self):
+        """Open the settings window"""
+
+        settings_window = Toplevel(self.root)
+        settings_window.title('Settings')
+        settings_window.geometry('400x300')
+
+        # Add settings options here
+        Label(settings_window, text="Font Size:").pack(pady=5)
+        self.font_size_var = StringVar(value='12')
+        font_size_entry = Entry(settings_window, textvariable=self.font_size_var)
+        font_size_entry.pack(pady=5)
+
+        Label(settings_window, text="Theme:").pack(pady=5)
+        self.theme_var = StringVar(value='Light')
+        theme_menu = ttk.Combobox(settings_window, textvariable=self.theme_var, values=['Light', 'Dark'])
+        theme_menu.pack(pady=5)
+
+        Button(settings_window, text="Apply", command=self.apply_settings).pack(pady=10)
+
+    def apply_settings(self):
+        """Apply the selected settings"""
+
+        # Update font size
+        new_font_size = int(self.font_size_var.get())
+        self.entry_font = ('Consolas', new_font_size)
+        self.output_font = ('Consolas', new_font_size - 1)
+
+        # Update theme
+        if self.theme_var.get() == 'Dark':
+            self.current_style = self.dark_mode
+        else:
+            self.current_style = self.light_mode
+
+        # Apply the new style and font settings
+        self.apply_style()
+
+        # Update all tabs with the new font size
+        for tab_id in self.notebook.tabs():
+            tab_frame = self.notebook.nametowidget(tab_id)
+            for widget in tab_frame.winfo_children():
+                if isinstance(widget, Frame):  # Entry frame
+                    for child in widget.winfo_children():
+                        if isinstance(child, Entry):
+                            child.configure(font=self.entry_font)
+                elif isinstance(widget, Text):  # Output text
+                    widget.configure(font=self.output_font)
