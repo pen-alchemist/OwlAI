@@ -44,11 +44,6 @@ class TerminalApp:
         self.entry_font = ('Consolas', 12)
         self.output_font = ('Consolas', 11)
 
-        # List of interactive commands
-        self.interactive_commands = [
-            'nano', 'vim', 'ssh', 'psql', 'top', 'htop', 'sudo su'
-        ]
-
         # Current working directory
         self.current_directory = os.path.expanduser('~')  # Start in the user's home directory
 
@@ -88,7 +83,7 @@ class TerminalApp:
         """Add a new tab to the notebook"""
 
         tab_frame = Frame(self.notebook, bg=self.current_style['bg'])
-        tab_id = f'Terminal {self.notebook.index('end') + 1}'
+        tab_id = f'Terminal {self.notebook.index("end") + 1}'
 
         # Add the tab to the notebook with a close button symbol
         self.notebook.add(tab_frame, text=f'{tab_id} ×')
@@ -251,11 +246,8 @@ class TerminalApp:
             if command.startswith('cd '):
                 self.handle_cd(command, output_text, entry_label)
             else:
-                # Extract the base command (e.g., "nano" from "nano file.txt")
-                base_command = command.split()[0]
-
                 # Check if the command is interactive
-                if base_command in self.interactive_commands:
+                if self.is_interactive(command):
                     # Open the interactive command in a new window
                     self.open_interactive_window(command)
                 else:
@@ -277,6 +269,19 @@ class TerminalApp:
                     finally:
                         # Clear the entry field after execution
                         entry.delete(0, END)
+
+    def is_interactive(self, command):
+        """Check if a command is interactive by attempting to run it in a PTY"""
+
+        try:
+            # Use pexpect to check if the command is interactive
+            child = pexpect.spawn(command, timeout=1)
+            child.expect(pexpect.EOF, timeout=1)
+            return False  # If the command exits immediately, it's not interactive
+        except pexpect.TIMEOUT:
+            return True  # If the command doesn't exit, it's interactive
+        except Exception:
+            return False  # Default to non-interactive if there's an error
 
     def handle_cd(self, command, output_text, entry_label):
         """Handle the 'cd' command to change the current directory"""
@@ -344,6 +349,7 @@ class TerminalApp:
                 cwd=self.current_directory,
                 env={'TERM': 'xterm-256color'},  # Set the terminal type
                 encoding='utf-8',
+                codec_errors='replace',  # Replace invalid UTF-8 characters
                 dimensions=(24, 80)  # Set the initial terminal size
             )
             output_text.insert(END, f'$ {command}\n')
@@ -357,17 +363,29 @@ class TerminalApp:
                 elif index == 1:  # TIMEOUT
                     output = child.before
                     if output:
-                        stream.feed(output)  # Feed the output to the pyte screen
-                        output_text.insert(END, screen.display)  # Display the screen content
-                        output_text.see(END)
-                        screen.reset()  # Reset the screen for the next output
+                        try:
+                            # Decode the output with error handling
+                            decoded_output = output.encode('utf-8', errors='replace').decode('utf-8')
+                            stream.feed(decoded_output)  # Feed the output to the pyte screen
+                            output_text.insert(END, screen.display)  # Display the screen content
+                            output_text.see(END)
+                            screen.reset()  # Reset the screen for the next output
+                        except UnicodeError:
+                            # If decoding fails, insert raw output
+                            output_text.insert(END, output)
+                            output_text.see(END)
 
             # Final output
             output = child.before
             if output:
-                stream.feed(output)
-                output_text.insert(END, screen.display)
-                output_text.see(END)
+                try:
+                    decoded_output = output.encode('utf-8', errors='replace').decode('utf-8')
+                    stream.feed(decoded_output)
+                    output_text.insert(END, screen.display)
+                    output_text.see(END)
+                except UnicodeError:
+                    output_text.insert(END, output)
+                    output_text.see(END)
         except Exception as e:
             output_text.insert(END, f'Error: {str(e)}\n')
             output_text.see(END)
