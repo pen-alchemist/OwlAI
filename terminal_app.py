@@ -3,11 +3,9 @@ import pyte
 import pexpect
 import threading
 import subprocess
-
 from tkinter import Entry, Text, Scrollbar, END, Frame, Label, Button, Toplevel, StringVar
 from tkinter import ttk
 from tkinter.font import Font
-
 
 class TerminalApp:
     def __init__(self, root):
@@ -15,37 +13,84 @@ class TerminalApp:
         self.root.title('OwlAI Terminal')
         self.root.geometry('1200x690')
 
-        # Define light and dark mode colors
-        self.light_mode = {
-            'bg': '#f0f0f0',
-            'fg': '#333333',
-            'entry_bg': '#ffffff',
-            'entry_fg': '#333333',
-            'output_bg': '#ffffff',
-            'output_fg': '#333333',
-            'highlight': '#cccccc',
-            'tab_bg': '#f0f0f0',
-            'tab_fg': '#333333',
+        # Define themes
+        self.themes = {
+            'original': {
+                'bg': '#f0f0f0',
+                'fg': '#333333',
+                'entry_bg': '#ffffff',
+                'entry_fg': '#333333',
+                'output_bg': '#ffffff',
+                'output_fg': '#333333',
+                'highlight': '#cccccc',
+                'tab_bg': '#f0f0f0',
+                'tab_fg': '#333333'
+            },
+            'high-tech': {
+                'bg': '#0a192f',
+                'fg': '#64ffda',
+                'entry_bg': '#112240',
+                'entry_fg': '#ccd6f6',
+                'output_bg': '#112240',
+                'output_fg': '#ccd6f6',
+                'highlight': '#64ffda',
+                'tab_bg': '#0a192f',
+                'tab_fg': '#64ffda'
+            },
+            'space': {
+                'bg': '#000033',
+                'fg': '#ffffff',
+                'entry_bg': '#000066',
+                'entry_fg': '#ffffff',
+                'output_bg': '#000066',
+                'output_fg': '#ffffff',
+                'highlight': '#00ccff',
+                'tab_bg': '#000033',
+                'tab_fg': '#00ccff'
+            },
+            'matrix': {
+                'bg': '#000000',
+                'fg': '#00ff00',
+                'entry_bg': '#003300',
+                'entry_fg': '#00ff00',
+                'output_bg': '#003300',
+                'output_fg': '#00ff00',
+                'highlight': '#00ff00',
+                'tab_bg': '#000000',
+                'tab_fg': '#00ff00'
+            },
+            'ancient': {
+                'bg': '#2c1f1f',
+                'fg': '#d4af37',
+                'entry_bg': '#3d2c2c',
+                'entry_fg': '#d4af37',
+                'output_bg': '#3d2c2c',
+                'output_fg': '#d4af37',
+                'highlight': '#d4af37',
+                'tab_bg': '#2c1f1f',
+                'tab_fg': '#d4af37'
+            },
+            'cyberpunk': {
+                'bg': '#1a1a1a',
+                'fg': '#ff0099',
+                'entry_bg': '#333333',
+                'entry_fg': '#ff0099',
+                'output_bg': '#333333',
+                'output_fg': '#ff0099',
+                'highlight': '#ff0099',
+                'tab_bg': '#1a1a1a',
+                'tab_fg': '#ff0099'
+            }
         }
-        self.dark_mode = {
-            'bg': '#1e1e1e',
-            'fg': '#ffffff',
-            'entry_bg': '#2d2d2d',
-            'entry_fg': '#ffffff',
-            'output_bg': '#2d2d2d',
-            'output_fg': '#ffffff',
-            'highlight': '#555555',
-            'tab_bg': '#1e1e1e',
-            'tab_fg': '#ffffff',
-        }
-        self.current_style = self.light_mode  # Default to light mode
+        self.current_theme = 'original'
+        self.current_style = self.themes[self.current_theme]
 
         # Custom fonts
         self.entry_font = ('Consolas', 12)
         self.output_font = ('Consolas', 11)
 
         # Current working directory
-        self.current_directory = os.path.expanduser('~')  # Start in the user's home directory
+        self.current_directory = os.path.expanduser('~')
 
         # Create a notebook (tabbed interface)
         self.notebook = ttk.Notebook(self.root)
@@ -65,11 +110,19 @@ class TerminalApp:
         )
         self.add_tab_button.pack(side='left', padx=10, pady=10)
 
-        # Button to toggle between light and dark mode
+        # Button to toggle between light and dark mode or switch to default theme
         self.style_button = Button(
             self.root,
-            text='Switch to Dark Mode',
-            command=self.toggle_style,
+            text=(
+                'Switch to Dark Mode'
+                if self.current_theme == 'original'
+                else 'Switch to Default Theme'
+            ),
+            command=(
+                self.toggle_style
+                if self.current_theme == 'original'
+                else self.switch_to_default_theme
+            ),
             bg=self.current_style['bg'],
             fg=self.current_style['fg'],
             relief='flat'
@@ -79,7 +132,7 @@ class TerminalApp:
         # Settings button in the upper right corner
         self.settings_button = Button(
             self.root,
-            text='⚙️',  # Gear symbol for settings
+            text='⚙️',
             command=self.open_settings,
             bg=self.current_style['bg'],
             fg=self.current_style['fg'],
@@ -92,11 +145,8 @@ class TerminalApp:
 
     def add_tab(self):
         """Add a new tab to the notebook"""
-
         tab_frame = Frame(self.notebook, bg=self.current_style['bg'])
         tab_id = f'Terminal {self.notebook.index("end") + 1}'
-
-        # Add the tab to the notebook with a close button symbol
         self.notebook.add(tab_frame, text=f'{tab_id} ×')
 
         # Entry widget for user input
@@ -146,13 +196,12 @@ class TerminalApp:
         scrollbar.pack(side='right', fill='y')
         scrollbar.config(command=output_text.yview)
 
-        # Bind hotkeys: Enter to execute command
+        # Bind hotkeys
         entry.bind(
             '<Return>',
             lambda event, e=entry, o=output_text, l=entry_label:
             self.execute_command(e, o, l)
         )
-        # Bind hotkeys: Ctrl+L to clear output
         output_text.bind(
             '<Control-l>',
             lambda event, o=output_text:
@@ -161,67 +210,84 @@ class TerminalApp:
 
     def get_prompt(self):
         """Get the terminal prompt with the current directory"""
-
         return f'{os.getlogin()}@{os.uname().nodename}:{self.current_directory}$ '
 
     def on_tab_click(self, event):
         """Handle click events on the tab label to close the tab"""
-
         tab_id = self.notebook.identify(event.x, event.y)
         if tab_id:
             tab_index = self.notebook.index(tab_id)
             tab_text = self.notebook.tab(tab_id, 'text')
-
-            # Calculate the position of the "×" symbol
-            font = Font(family='Arial', size=10)  # Use the same font as the tab label
+            font = Font(family='Arial', size=10)
             text_width = font.measure(tab_text)
             close_button_width = font.measure(' ×')
             close_button_start = text_width - close_button_width
-
-            # Check if the click was on the "×" symbol
             if event.x >= close_button_start:
                 self.notebook.forget(tab_id)
-                if not self.notebook.tabs():  # If no tabs are left
-                    self.root.quit()  # Close the application
+                if not self.notebook.tabs():
+                    self.root.quit()
 
     def toggle_style(self):
-        """Toggle between light and dark mode"""
+        """Toggle between light and dark mode (only for original theme)"""
+        if self.current_theme == 'original':
+            if self.current_style == self.themes['original']:
+                self.current_style = {
+                    'bg': '#1e1e1e',
+                    'fg': '#ffffff',
+                    'entry_bg': '#2d2d2d',
+                    'entry_fg': '#ffffff',
+                    'output_bg': '#2d2d2d',
+                    'output_fg': '#ffffff',
+                    'highlight': '#555555',
+                    'tab_bg': '#1e1e1e',
+                    'tab_fg': '#ffffff'
+                }
+                self.style_button.config(text='Switch to Light Mode')
+            else:
+                self.current_style = self.themes['original']
+                self.style_button.config(text='Switch to Dark Mode')
+            self.apply_style()
 
-        if self.current_style == self.light_mode:
-            self.current_style = self.dark_mode
-            self.style_button.config(text='Switch to Light Mode')
-        else:
-            self.current_style = self.light_mode
-            self.style_button.config(text='Switch to Dark Mode')
-
-        # Apply the new style
+    def switch_to_default_theme(self):
+        """Switch back to the default (original) theme"""
+        self.current_theme = 'original'
+        self.current_style = self.themes[self.current_theme]
+        self.style_button.config(
+            text='Switch to Dark Mode', command=self.toggle_style
+        )
         self.apply_style()
 
     def apply_style(self):
         """Apply the current style to all widgets"""
-
         self.root.configure(bg=self.current_style['bg'])
         self.add_tab_button.configure(
-            bg=self.current_style['bg'],
-            fg=self.current_style['fg']
+            bg=self.current_style['bg'], fg=self.current_style['fg']
+        )
+        self.settings_button.configure(
+            bg=self.current_style['bg'], fg=self.current_style['fg']
         )
         self.style_button.configure(
             bg=self.current_style['bg'],
-            fg=self.current_style['fg']
+            fg=self.current_style['fg'],
+            text=(
+                'Switch to Dark Mode'
+                if self.current_theme == 'original'
+                and self.current_style == self.themes['original']
+                else 'Switch to Light Mode'
+                if self.current_theme == 'original'
+                else 'Switch to Default Theme'
+            ),
+            command=(
+                self.toggle_style
+                if self.current_theme == 'original'
+                else self.switch_to_default_theme
+            )
         )
-        self.settings_button.configure(
-            bg=self.current_style['bg'],
-            fg=self.current_style['fg']
-        )
-
-        # Update style for all tabs
         for tab_id in self.notebook.tabs():
             tab_frame = self.notebook.nametowidget(tab_id)
             tab_frame.configure(bg=self.current_style['bg'])
-
-            # Update entry and output widgets in the tab
             for widget in tab_frame.winfo_children():
-                if isinstance(widget, Frame):  # Entry frame
+                if isinstance(widget, Frame):
                     widget.configure(bg=self.current_style['bg'])
                     for child in widget.winfo_children():
                         if isinstance(child, Label):
@@ -236,7 +302,7 @@ class TerminalApp:
                                 highlightcolor=self.current_style['highlight'],
                                 highlightbackground=self.current_style['highlight']
                             )
-                elif isinstance(widget, Text):  # Output text
+                elif isinstance(widget, Text):
                     widget.configure(
                         bg=self.current_style['output_bg'],
                         fg=self.current_style['output_fg'],
@@ -246,27 +312,19 @@ class TerminalApp:
 
     def clear_output(self, output_text, event=None):
         """Clear the output text area"""
-
         output_text.delete(1.0, END)
 
     def execute_command(self, entry, output_text, entry_label, event=None):
         """Execute command using subprocess or handle interactive commands"""
-
         command = entry.get().strip()
         if command:
-            # Update the prompt
             entry_label.config(text=self.get_prompt())
-
-            # Handle "cd" command separately
             if command.startswith('cd '):
                 self.handle_cd(command, output_text, entry_label)
             else:
-                # Check if the command is interactive
                 if self.is_interactive(command):
-                    # Open the interactive command in a new window
                     self.open_interactive_window(command)
                 else:
-                    # Execute the command using subprocess
                     try:
                         result = subprocess.run(
                             command,
@@ -277,43 +335,34 @@ class TerminalApp:
                         )
                         chars = f'$ {command}\n{result.stdout}{result.stderr}\n'
                         output_text.insert(END, chars)
-                        # Auto-scroll to the end
                         output_text.see(END)
                     except Exception as e:
                         output_text.insert(END, f'Error: {str(e)}\n')
                     finally:
-                        # Clear the entry field after execution
                         entry.delete(0, END)
 
     def is_interactive(self, command):
-        """Check if a command is interactive by attempting to run it in a PTY"""
-
+        """Check if a command is interactive"""
         try:
-            # Use pexpect to check if the command is interactive
             child = pexpect.spawn(command, timeout=1)
             child.expect(pexpect.EOF, timeout=1)
-            return False  # If the command exits immediately, it's not interactive
+            return False
         except pexpect.TIMEOUT:
-            return True  # If the command doesn't exit, it's interactive
+            return True
         except Exception:
-            return False  # Default to non-interactive if there's an error
+            return False
 
     def handle_cd(self, command, output_text, entry_label):
         """Handle the 'cd' command to change the current directory"""
-
         try:
-            # Extract the target directory
             target_dir = command.split(' ', 1)[1].strip()
             new_dir = os.path.abspath(
                 os.path.join(self.current_directory, target_dir)
             )
-
-            # Change the directory
             os.chdir(new_dir)
             self.current_directory = new_dir
             output_text.insert(END, f'Changed directory to {new_dir}\n')
             output_text.see(END)
-            # Update the prompt immediately
             entry_label.config(text=self.get_prompt())
         except Exception as e:
             output_text.insert(END, f'Error: {str(e)}\n')
@@ -321,13 +370,9 @@ class TerminalApp:
 
     def open_interactive_window(self, command):
         """Open a new window for interactive commands"""
-
-        # Create a new Toplevel window
         interactive_window = Toplevel(self.root)
         interactive_window.title(f'Interactive: {command}')
         interactive_window.geometry('800x600')
-
-        # Create a Text widget for output
         output_text = Text(
             interactive_window,
             wrap='word',
@@ -336,14 +381,10 @@ class TerminalApp:
             fg=self.current_style['output_fg']
         )
         output_text.pack(fill='both', expand=True, padx=10, pady=10)
-
-        # Scrollbar for the output area
         scrollbar = Scrollbar(output_text)
         output_text.config(yscrollcommand=scrollbar.set)
         scrollbar.pack(side='right', fill='y')
         scrollbar.config(command=output_text.yview)
-
-        # Start the interactive command in a separate thread
         threading.Thread(
             target=self.run_interactive_command,
             args=(command, output_text),
@@ -352,49 +393,43 @@ class TerminalApp:
 
     def run_interactive_command(self, command, output_text):
         """Run the interactive command in the new window"""
-
         try:
-            # Create a pyte screen to emulate a terminal
             screen = pyte.Screen(80, 24)
             stream = pyte.ByteStream(screen)
-
-            # Start the interactive command with a PTY
             child = pexpect.spawn(
                 command,
                 cwd=self.current_directory,
-                env={'TERM': 'xterm-256color'},  # Set the terminal type
+                env={'TERM': 'xterm-256color'},
                 encoding='utf-8',
-                codec_errors='replace',  # Replace invalid UTF-8 characters
-                dimensions=(24, 80)  # Set the initial terminal size
+                codec_errors='replace',
+                dimensions=(24, 80)
             )
             output_text.insert(END, f'$ {command}\n')
             output_text.see(END)
-
-            # Continuously read output from the command
             while True:
                 index = child.expect([pexpect.EOF, pexpect.TIMEOUT])
-                if index == 0:  # EOF
+                if index == 0:
                     break
-                elif index == 1:  # TIMEOUT
+                elif index == 1:
                     output = child.before
                     if output:
                         try:
-                            # Decode the output with error handling
-                            decoded_output = output.encode('utf-8', errors='replace').decode('utf-8')
-                            stream.feed(decoded_output)  # Feed the output to the pyte screen
-                            output_text.insert(END, screen.display)  # Display the screen content
+                            decoded_output = output.encode(
+                                'utf-8', errors='replace'
+                            ).decode('utf-8')
+                            stream.feed(decoded_output)
+                            output_text.insert(END, screen.display)
                             output_text.see(END)
-                            screen.reset()  # Reset the screen for the next output
+                            screen.reset()
                         except UnicodeError:
-                            # If decoding fails, insert raw output
                             output_text.insert(END, output)
                             output_text.see(END)
-
-            # Final output
             output = child.before
             if output:
                 try:
-                    decoded_output = output.encode('utf-8', errors='replace').decode('utf-8')
+                    decoded_output = output.encode(
+                        'utf-8', errors='replace'
+                    ).decode('utf-8')
                     stream.feed(decoded_output)
                     output_text.insert(END, screen.display)
                     output_text.see(END)
@@ -407,48 +442,41 @@ class TerminalApp:
 
     def open_settings(self):
         """Open the settings window"""
-
         settings_window = Toplevel(self.root)
         settings_window.title('Settings')
         settings_window.geometry('400x300')
-
-        # Add settings options here
         Label(settings_window, text="Font Size:").pack(pady=5)
         self.font_size_var = StringVar(value='12')
         font_size_entry = Entry(settings_window, textvariable=self.font_size_var)
         font_size_entry.pack(pady=5)
-
         Label(settings_window, text="Theme:").pack(pady=5)
-        self.theme_var = StringVar(value='Light')
-        theme_menu = ttk.Combobox(settings_window, textvariable=self.theme_var, values=['Light', 'Dark'])
+        self.theme_var = StringVar(value=self.current_theme)
+        theme_menu = ttk.Combobox(
+            settings_window,
+            textvariable=self.theme_var,
+            values=list(self.themes.keys())
+        )
         theme_menu.pack(pady=5)
-
-        Button(settings_window, text="Apply", command=self.apply_settings).pack(pady=10)
+        Button(
+            settings_window,
+            text="Apply",
+            command=self.apply_settings
+        ).pack(pady=10)
 
     def apply_settings(self):
         """Apply the selected settings"""
-
-        # Update font size
         new_font_size = int(self.font_size_var.get())
         self.entry_font = ('Consolas', new_font_size)
         self.output_font = ('Consolas', new_font_size - 1)
-
-        # Update theme
-        if self.theme_var.get() == 'Dark':
-            self.current_style = self.dark_mode
-        else:
-            self.current_style = self.light_mode
-
-        # Apply the new style and font settings
+        self.current_theme = self.theme_var.get()
+        self.current_style = self.themes[self.current_theme]
         self.apply_style()
-
-        # Update all tabs with the new font size
         for tab_id in self.notebook.tabs():
             tab_frame = self.notebook.nametowidget(tab_id)
             for widget in tab_frame.winfo_children():
-                if isinstance(widget, Frame):  # Entry frame
+                if isinstance(widget, Frame):
                     for child in widget.winfo_children():
                         if isinstance(child, Entry):
                             child.configure(font=self.entry_font)
-                elif isinstance(widget, Text):  # Output text
+                elif isinstance(widget, Text):
                     widget.configure(font=self.output_font)
