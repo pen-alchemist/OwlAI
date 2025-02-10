@@ -1,19 +1,15 @@
 import os
-import pyte
-import pexpect
-import tempfile
 import threading
 import subprocess
 
-from tkinter import Entry, Text, Scrollbar, END, Frame, Label, Button, Toplevel, StringVar
 from tkinter import ttk
 from tkinter.font import Font
-from tkinter import filedialog
-from tkinter import messagebox
+from tkinter import Entry, Text, Scrollbar, END, Frame, Label, Button, Toplevel
 
 from themes import themes
 from settings import SettingsWindow
 from utils import get_prompt, is_interactive, handle_cd, run_interactive_command
+
 
 class TerminalApp:
     def __init__(self, root):

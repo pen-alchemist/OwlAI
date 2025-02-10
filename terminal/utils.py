@@ -1,8 +1,9 @@
 import os
-import pexpect
 import pyte
+import pexpect
 
 import tkinter as tk
+
 
 def get_prompt(current_directory):
     """Get the terminal prompt with the current directory"""

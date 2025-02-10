@@ -1,10 +1,13 @@
+import os
+import tempfile
+import subprocess
+
+import tkinter as tk
+
 from tkinter import Frame, Label, Button, Entry, StringVar
 from tkinter import ttk
 from tkinter import filedialog, messagebox
-import tempfile
-import subprocess
-import os
-import tkinter as tk
+
 
 class SettingsWindow:
     def __init__(self, parent):
@@ -70,11 +73,11 @@ class SettingsWindow:
         try:
             new_font_size = int(self.font_size_var.get())
             if new_font_size <= 0:
-                raise ValueError("Font size must be a positive integer.")
+                raise ValueError('Font size must be a positive integer.')
         except ValueError as e:
             messagebox.showerror(
-                "Invalid Font Size",
-                f"Please enter a valid positive integer for font size. Error: {e}"
+                'Invalid Font Size',
+                f'Please enter a valid positive integer for font size. Error: {e}'
             )
             return  # Exit the method if the font size is invalid
 
