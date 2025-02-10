@@ -1,9 +1,9 @@
-from tkinter import Tk
+import tkinter as tk
 
 from terminal_app import TerminalApp
 
 
 if __name__ == '__main__':
-    root = Tk()
+    root = tk.Tk()
     app = TerminalApp(root)
     root.mainloop()
