@@ -1,11 +1,16 @@
 import os
 import pyte
 import pexpect
+import tempfile
 import threading
 import subprocess
+
 from tkinter import Entry, Text, Scrollbar, END, Frame, Label, Button, Toplevel, StringVar
 from tkinter import ttk
 from tkinter.font import Font
+from tkinter import filedialog
+from tkinter import messagebox
+
 
 class TerminalApp:
     def __init__(self, root):
@@ -146,7 +151,7 @@ class TerminalApp:
     def add_tab(self):
         """Add a new tab to the notebook"""
         tab_frame = Frame(self.notebook, bg=self.current_style['bg'])
-        tab_id = f'Terminal {self.notebook.index("end") + 1}'
+        tab_id = f'Terminal {self.notebook.index('end') + 1}'
         self.notebook.add(tab_frame, text=f'{tab_id} ×')
 
         # Entry widget for user input
@@ -441,36 +446,118 @@ class TerminalApp:
             output_text.see(END)
 
     def open_settings(self):
-        """Open the settings window"""
+        """Open the settings window with tabs for Accessibility and VPN"""
         settings_window = Toplevel(self.root)
         settings_window.title('Settings')
-        settings_window.geometry('400x300')
-        Label(settings_window, text="Font Size:").pack(pady=5)
+        settings_window.geometry('500x400')
+
+        # Create a notebook (tabbed interface) for settings
+        settings_notebook = ttk.Notebook(settings_window)
+        settings_notebook.pack(fill='both', expand=True, padx=10, pady=10)
+
+        # Accessibility Tab
+        accessibility_tab = Frame(settings_notebook)
+        settings_notebook.add(accessibility_tab, text='Accessibility')
+
+        # Font Size
+        Label(accessibility_tab, text='Font Size:').pack(pady=5)
         self.font_size_var = StringVar(value='12')
-        font_size_entry = Entry(settings_window, textvariable=self.font_size_var)
+        font_size_entry = Entry(accessibility_tab, textvariable=self.font_size_var)
         font_size_entry.pack(pady=5)
-        Label(settings_window, text="Theme:").pack(pady=5)
+
+        # Theme Selection
+        Label(accessibility_tab, text='Theme:''').pack(pady=5)
         self.theme_var = StringVar(value=self.current_theme)
         theme_menu = ttk.Combobox(
-            settings_window,
+            accessibility_tab,
             textvariable=self.theme_var,
             values=list(self.themes.keys())
         )
         theme_menu.pack(pady=5)
+
+        # VPN Tab
+        vpn_tab = Frame(settings_notebook)
+        settings_notebook.add(vpn_tab, text='VPN')
+
+        # VPN File Upload
+        Label(vpn_tab, text='Upload VPN Configuration File:').pack(pady=5)
+        self.vpn_file_path = StringVar()
+        Label(vpn_tab, textvariable=self.vpn_file_path, wraplength=400).pack(pady=5)
+
+        Button(
+            vpn_tab,
+            text='Browse',
+            command=self.upload_vpn_file
+        ).pack(pady=5)
+
+        # VPN Username and Password
+        Label(vpn_tab, text='VPN Username:').pack(pady=5)
+        self.vpn_username_var = StringVar()
+        Entry(vpn_tab, textvariable=self.vpn_username_var).pack(pady=5)
+
+        Label(vpn_tab, text='VPN Password:').pack(pady=5)
+        self.vpn_password_var = StringVar()
+        Entry(vpn_tab, textvariable=self.vpn_password_var, show='*').pack(pady=5)
+
+        # Apply Button
         Button(
             settings_window,
-            text="Apply",
+            text='Apply',
             command=self.apply_settings
         ).pack(pady=10)
 
+    from tkinter import messagebox  # Add this import at the top of the file
+
+    import tempfile  # Add this import at the top of the file
+
     def apply_settings(self):
-        """Apply the selected settings"""
+        """Apply the selected settings for Accessibility and VPN"""
+        # Apply Accessibility Settings
         new_font_size = int(self.font_size_var.get())
         self.entry_font = ('Consolas', new_font_size)
         self.output_font = ('Consolas', new_font_size - 1)
         self.current_theme = self.theme_var.get()
         self.current_style = self.themes[self.current_theme]
         self.apply_style()
+
+        # Apply VPN Settings
+        vpn_file_path = self.vpn_file_path.get().strip()
+        if vpn_file_path:
+            try:
+                # Create a temporary file to store VPN credentials
+                with tempfile.NamedTemporaryFile(mode='w', delete=False) as cred_file:
+                    cred_file.write(f'{self.vpn_username_var.get()}\n')
+                    cred_file.write(f'{self.vpn_password_var.get()}\n')
+                    cred_file_path = cred_file.name
+
+                # Start OpenVPN with the uploaded configuration file and credentials
+                vpn_command = (
+                    f'openvpn --config '
+                    f'{vpn_file_path} '
+                    f'--auth-user-pass '
+                    f'{cred_file_path}'
+                )
+                subprocess.run(vpn_command, shell=True, check=True)
+                messagebox.showinfo(
+                    'VPN Status',
+                    'VPN started successfully using the uploaded configuration.'
+                )
+            except subprocess.CalledProcessError as e:
+                messagebox.showerror(
+                    'VPN Error',
+                    f'Failed to start VPN: {e}'
+                )
+            except FileNotFoundError:
+                messagebox.showerror(
+                    'VPN Error',
+                    'OpenVPN is not installed or not found in the system PATH.'
+                )
+            finally:
+                # Clean up the temporary credentials file
+                if 'cred_file_path' in locals():
+                    os.remove(cred_file_path)
+
+        # Update font in all tabs
         for tab_id in self.notebook.tabs():
             tab_frame = self.notebook.nametowidget(tab_id)
             for widget in tab_frame.winfo_children():
@@ -480,3 +567,33 @@ class TerminalApp:
                             child.configure(font=self.entry_font)
                 elif isinstance(widget, Text):
                     widget.configure(font=self.output_font)
+
+        # Update font in all tabs
+        for tab_id in self.notebook.tabs():
+            tab_frame = self.notebook.nametowidget(tab_id)
+            for widget in tab_frame.winfo_children():
+                if isinstance(widget, Frame):
+                    for child in widget.winfo_children():
+                        if isinstance(child, Entry):
+                            child.configure(font=self.entry_font)
+                elif isinstance(widget, Text):
+                    widget.configure(font=self.output_font)
+
+    def configure_vpn(self, config):
+        """Configure and start the VPN based on the provided configuration"""
+        if config:
+            try:
+                subprocess.run(config, shell=True, check=True)
+                print('VPN started successfully.')
+            except subprocess.CalledProcessError as e:
+                print(f'Failed to start VPN: {e}')
+
+    def upload_vpn_file(self):
+        """Open a file dialog to upload a VPN configuration file"""
+        file_path = filedialog.askopenfilename(
+            title='Select VPN Configuration File',
+            filetypes=[('OpenVPN Files', '*.ovpn'), ('All Files', '*.*')]
+        )
+        if file_path:
+            self.vpn_file_path.set(file_path)
+            print(f'VPN file uploaded: {file_path}')
