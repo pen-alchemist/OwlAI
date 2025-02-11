@@ -1,15 +1,4 @@
 themes = {
-    'original-dark': {
-        'bg': '#1e1e1e',
-        'fg': '#ffffff',
-        'entry_bg': '#2d2d2d',
-        'entry_fg': '#ffffff',
-        'output_bg': '#2d2d2d',
-        'output_fg': '#ffffff',
-        'highlight': '#555555',
-        'tab_bg': '#1e1e1e',
-        'tab_fg': '#ffffff'
-    },
     'original-light': {
         'bg': '#f0f0f0',
         'fg': '#333333',
@@ -20,6 +9,17 @@ themes = {
         'highlight': '#cccccc',
         'tab_bg': '#f0f0f0',
         'tab_fg': '#333333'
+    },
+    'original-dark': {
+        'bg': '#1e1e1e',
+        'fg': '#ffffff',
+        'entry_bg': '#2d2d2d',
+        'entry_fg': '#ffffff',
+        'output_bg': '#2d2d2d',
+        'output_fg': '#ffffff',
+        'highlight': '#555555',
+        'tab_bg': '#1e1e1e',
+        'tab_fg': '#ffffff'
     },
     'high-tech': {
         'bg': '#0a192f',

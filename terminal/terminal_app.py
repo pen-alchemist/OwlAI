@@ -4,7 +4,7 @@ import subprocess
 
 from tkinter import ttk
 from tkinter.font import Font
-from tkinter import Entry, Text, Scrollbar, END, Frame, Label, Button, Toplevel
+from tkinter import Entry, Text, Scrollbar, END, Frame, Label, Button, Toplevel, Menu
 
 from themes import themes
 from settings import SettingsWindow
@@ -26,6 +26,47 @@ class TerminalApp:
         self.output_font = ('Consolas', 11)
 
         self.current_directory = os.path.expanduser('~')
+
+        # Create a menu bar
+        self.menu_bar = Menu(self.root)
+        self.root.config(menu=self.menu_bar)
+
+        # File menu
+        self.file_menu = Menu(self.menu_bar, tearoff=0)
+        self.file_menu.add_command(label="New Tab", command=self.add_tab)
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label="Exit", command=self.root.quit)
+        self.menu_bar.add_cascade(label="File", menu=self.file_menu)
+
+        # Edit menu
+        self.edit_menu = Menu(self.menu_bar, tearoff=0)
+        self.edit_menu.add_command(label="Cut")
+        self.edit_menu.add_command(label="Copy")
+        self.edit_menu.add_command(label="Paste")
+        self.menu_bar.add_cascade(label="Edit", menu=self.edit_menu)
+
+        # View menu
+        self.view_menu = Menu(self.menu_bar, tearoff=0)
+        self.view_menu.add_command(label="Zoom In")
+        self.view_menu.add_command(label="Zoom Out")
+        self.menu_bar.add_cascade(label="View", menu=self.view_menu)
+
+        # Navigate menu
+        self.navigate_menu = Menu(self.menu_bar, tearoff=0)
+        self.navigate_menu.add_command(label="Back")
+        self.navigate_menu.add_command(label="Forward")
+        self.menu_bar.add_cascade(label="Navigate", menu=self.navigate_menu)
+
+        # Window menu
+        self.window_menu = Menu(self.menu_bar, tearoff=0)
+        self.window_menu.add_command(label="Minimize")
+        self.window_menu.add_command(label="Maximize")
+        self.menu_bar.add_cascade(label="Window", menu=self.window_menu)
+
+        # Help menu
+        self.help_menu = Menu(self.menu_bar, tearoff=0)
+        self.help_menu.add_command(label="About")
+        self.menu_bar.add_cascade(label="Help", menu=self.help_menu)
 
         # Toolbar
         self.toolbar = Frame(self.root, bg='#2d2d2d', height=40)
