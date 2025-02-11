@@ -15,7 +15,8 @@ class TerminalApp:
     def __init__(self, root):
         self.root = root
         self.root.title('OwlAI Terminal')
-        self.root.geometry('1200x690')
+        self.root.geometry('900x600')
+        self.root.configure(bg='#1e1e1e')
 
         self.themes = themes
         self.current_theme = 'original'
@@ -26,48 +27,124 @@ class TerminalApp:
 
         self.current_directory = os.path.expanduser('~')
 
-        self.notebook = ttk.Notebook(self.root)
+        # Toolbar
+        self.toolbar = Frame(self.root, bg='#2d2d2d', height=40)
+        self.toolbar.pack(side='top', fill='x')
+
+        # Toolbar buttons
+        self.new_tab_button = Button(
+            self.toolbar,
+            text='+ New Tab',
+            command=self.add_tab,
+            bg='#2d2d2d',
+            fg='#ffffff',
+            relief='flat',
+            bd=0,
+            highlightthickness=0,
+            activebackground='#3d3d3d',
+            activeforeground='#ffffff',
+            font=('Arial', 10),
+            padx=10,
+            pady=5,
+            borderwidth=0,
+            highlightcolor='#2d2d2d',
+            highlightbackground='#2d2d2d',
+            border=0,
+            cursor='hand2'
+        )
+        self.new_tab_button.pack(side='left', padx=5, pady=5)
+
+        self.style_button = Button(
+            self.toolbar,
+            text='Switch to Dark Mode',
+            command=self.toggle_style,
+            bg='#2d2d2d',
+            fg='#ffffff',
+            relief='flat',
+            bd=0,
+            highlightthickness=0,
+            activebackground='#3d3d3d',
+            activeforeground='#ffffff',
+            font=('Arial', 10),
+            padx=10,
+            pady=5,
+            borderwidth=0,
+            highlightcolor='#2d2d2d',
+            highlightbackground='#2d2d2d',
+            border=0,
+            cursor='hand2'
+        )
+        self.style_button.pack(side='left', padx=5, pady=5)
+
+        self.settings_button = Button(
+            self.toolbar,
+            text='⚙️',
+            command=self.open_settings,
+            bg='#2d2d2d',
+            fg='#ffffff',
+            relief='flat',
+            bd=0,
+            highlightthickness=0,
+            activebackground='#3d3d3d',
+            activeforeground='#ffffff',
+            font=('Arial', 12),
+            padx=10,
+            pady=5,
+            borderwidth=0,
+            highlightcolor='#2d2d2d',
+            highlightbackground='#2d2d2d',
+            border=0,
+            cursor='hand2'
+        )
+        self.settings_button.pack(side='right', padx=5, pady=5)
+
+        # Sidebar
+        self.sidebar = Frame(self.root, bg='#2d2d2d', width=50)
+        self.sidebar.pack(side='left', fill='y')
+
+        # Sidebar buttons
+        self.terminal_button = Button(
+            self.sidebar,
+            text='🖥️',
+            bg='#2d2d2d',
+            fg='#ffffff',
+            relief='flat',
+            bd=0,
+            highlightthickness=0,
+            activebackground='#3d3d3d',
+            activeforeground='#ffffff',
+            font=('Arial', 14),
+            padx=10,
+            pady=10,
+            borderwidth=0,
+            highlightcolor='#2d2d2d',
+            highlightbackground='#2d2d2d',
+            border=0,
+            cursor='hand2'
+        )
+        self.terminal_button.pack(pady=10)
+
+        # Main content area
+        self.main_content = Frame(self.root, bg='#1e1e1e')
+        self.main_content.pack(side='right', fill='both', expand=True)
+
+        self.notebook = ttk.Notebook(self.main_content)
         self.notebook.pack(fill='both', expand=True, padx=10, pady=10)
 
         self.add_tab()
 
-        self.add_tab_button = Button(
-            self.root,
-            text='+ New Tab',
-            command=self.add_tab,
-            bg=self.current_style['bg'],
-            fg=self.current_style['fg'],
-            relief='flat'
-        )
-        self.add_tab_button.pack(side='left', padx=10, pady=10)
+        # Status bar
+        self.status_bar = Frame(self.root, bg='#2d2d2d', height=20)
+        self.status_bar.pack(side='bottom', fill='x')
 
-        self.style_button = Button(
-            self.root,
-            text=(
-                'Switch to Dark Mode'
-                if self.current_theme == 'original'
-                else 'Switch to Default Theme'
-            ),
-            command=(
-                self.toggle_style
-                if self.current_theme == 'original'
-                else self.switch_to_default_theme
-            ),
-            bg=self.current_style['bg'],
-            fg=self.current_style['fg'],
-            relief='flat'
+        self.status_label = Label(
+            self.status_bar,
+            text=f'Current Directory: {self.current_directory}',
+            bg='#2d2d2d',
+            fg='#ffffff',
+            font=('Arial', 10)
         )
-        self.style_button.pack(side='right', padx=10, pady=10)
-
-        self.settings_button = Button(
-            self.root,
-            text='⚙️',
-            command=self.open_settings,
-            bg=self.current_style['bg'],
-            fg=self.current_style['fg'],
-            relief='flat'
-        )
-        self.settings_button.pack(side='right', padx=10, pady=10)
+        self.status_label.pack(side='left', padx=10)
 
         self.notebook.bind('<ButtonPress-1>', self.on_tab_click)
 
@@ -180,7 +257,7 @@ class TerminalApp:
     def apply_style(self):
         """Apply the current style to all widgets"""
         self.root.configure(bg=self.current_style['bg'])
-        self.add_tab_button.configure(
+        self.new_tab_button.configure(
             bg=self.current_style['bg'], fg=self.current_style['fg']
         )
         self.settings_button.configure(
