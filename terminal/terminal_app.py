@@ -143,6 +143,27 @@ class TerminalApp:
         )
         self.terminal_button.pack(pady=10)
 
+        self.owl_ai_button = Button(
+            self.sidebar,
+            text='🦉',
+            bg='#2d2d2d',
+            fg='#ffffff',
+            relief='flat',
+            bd=0,
+            highlightthickness=0,
+            activebackground='#3d3d3d',
+            activeforeground='#ffffff',
+            font=('Arial', 14),
+            padx=10,
+            pady=10,
+            borderwidth=0,
+            highlightcolor='#2d2d2d',
+            highlightbackground='#2d2d2d',
+            border=0,
+            cursor='hand2'
+        )
+        self.owl_ai_button.pack(pady=10)
+
         # Main content area
         self.main_content = Frame(self.root, bg='#1e1e1e')
         self.main_content.pack(side='right', fill='both', expand=True)
