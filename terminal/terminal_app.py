@@ -19,7 +19,7 @@ class TerminalApp:
         self.root.configure(bg='#1e1e1e')
 
         self.themes = themes
-        self.current_theme = 'original'
+        self.current_theme = 'original-light'
         self.current_style = self.themes[self.current_theme]
 
         self.entry_font = ('Consolas', 12)
@@ -53,28 +53,6 @@ class TerminalApp:
             cursor='hand2'
         )
         self.new_tab_button.pack(side='left', padx=5, pady=5)
-
-        self.style_button = Button(
-            self.toolbar,
-            text='Switch to Dark Mode',
-            command=self.toggle_style,
-            bg='#2d2d2d',
-            fg='#ffffff',
-            relief='flat',
-            bd=0,
-            highlightthickness=0,
-            activebackground='#3d3d3d',
-            activeforeground='#ffffff',
-            font=('Arial', 10),
-            padx=10,
-            pady=5,
-            borderwidth=0,
-            highlightcolor='#2d2d2d',
-            highlightbackground='#2d2d2d',
-            border=0,
-            cursor='hand2'
-        )
-        self.style_button.pack(side='left', padx=5, pady=5)
 
         self.settings_button = Button(
             self.toolbar,
@@ -224,36 +202,6 @@ class TerminalApp:
                 if not self.notebook.tabs():
                     self.root.quit()
 
-    def toggle_style(self):
-        """Toggle between light and dark mode (only for original theme)"""
-        if self.current_theme == 'original':
-            if self.current_style == self.themes['original']:
-                self.current_style = {
-                    'bg': '#1e1e1e',
-                    'fg': '#ffffff',
-                    'entry_bg': '#2d2d2d',
-                    'entry_fg': '#ffffff',
-                    'output_bg': '#2d2d2d',
-                    'output_fg': '#ffffff',
-                    'highlight': '#555555',
-                    'tab_bg': '#1e1e1e',
-                    'tab_fg': '#ffffff'
-                }
-                self.style_button.config(text='Switch to Light Mode')
-            else:
-                self.current_style = self.themes['original']
-                self.style_button.config(text='Switch to Dark Mode')
-            self.apply_style()
-
-    def switch_to_default_theme(self):
-        """Switch back to the default (original) theme"""
-        self.current_theme = 'original'
-        self.current_style = self.themes[self.current_theme]
-        self.style_button.config(
-            text='Switch to Dark Mode', command=self.toggle_style
-        )
-        self.apply_style()
-
     def apply_style(self):
         """Apply the current style to all widgets"""
         self.root.configure(bg=self.current_style['bg'])
@@ -262,23 +210,6 @@ class TerminalApp:
         )
         self.settings_button.configure(
             bg=self.current_style['bg'], fg=self.current_style['fg']
-        )
-        self.style_button.configure(
-            bg=self.current_style['bg'],
-            fg=self.current_style['fg'],
-            text=(
-                'Switch to Dark Mode'
-                if self.current_theme == 'original'
-                and self.current_style == self.themes['original']
-                else 'Switch to Light Mode'
-                if self.current_theme == 'original'
-                else 'Switch to Default Theme'
-            ),
-            command=(
-                self.toggle_style
-                if self.current_theme == 'original'
-                else self.switch_to_default_theme
-            )
         )
         for tab_id in self.notebook.tabs():
             tab_frame = self.notebook.nametowidget(tab_id)
